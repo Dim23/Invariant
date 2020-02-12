@@ -84,13 +84,13 @@ dtimE=new TH1F("dtimeE","tof - t(exp for #pi),ns  TOF East Arm ",200,-2,10);
 
 hm2E  = new TH1F("hm2E","mass^{2} for Tof.East",150,-0.2,1.8);
 hm2W  = new TH1F("hm2W","mass^{2} for Tof.West",150,-0.2,1.8);
-invW  = new TH1F("invW","inv West",1000,0,2);
-invE  = new TH1F("invE","inv East",1000,0,2);
-invWE  = new TH1F("invWE","inv West and East",500,0,7);
-invALL  = new TH1F("invALL","inv West and East ALL",4000,0,8);
+invW  = new TH1F("invW","inv West",150,0.9,1.2);
+invE  = new TH1F("invE","inv East",150,0.9,1.2);
+invWE  = new TH1F("invWE","one Kaon in West and East",500,0,7);
+invALL  = new TH1F("invALL","West plus East",150,0.9,1.2);
 
-normKE  = new TH1F("normKE","NORM K East",50,-3,3);
-normKW  = new TH1F("normKW","NORM K West",50,-3,3);
+normKE  = new TH1F("normKE","NORM K East",50,-2,2);
+normKW  = new TH1F("normKW","NORM K West",50,-2,2);
 
 hpidW= new TH2F("hpidW","charge/momentum vs time of flight,  West Arm ",200,10,60,400,-2.2,2.2);
 hpidE= new TH2F("hpidE","charge/momentum vs time of flight,  East Arm ",200,10,60,400,-2.2,2.2);
@@ -202,7 +202,7 @@ cout << " Histograms for fitting was lopped"<<endl;
 }
 
 void hTANA::INV()
-{
+{gStyle->SetOptFit(1);
 float a,b,c,m12,mk,pti,ptk;
 int k;
 if (fChain == 0) return;
@@ -223,14 +223,14 @@ for (Long64_t jentry=0; jentry<nentries;jentry++)
             {  
             pti=p[i]*sin(the0[i]);m=pow(p[i],2)*(pow(ttof[i]*(1e-7)*CC/pltof[i],2)-1);
 
-            if (dcarm[i]==0 && fabs(IsKaonE(m,pti))<3)
+            if (dcarm[i]==0 && fabs(IsKaonE(m,pti))<2&&pti<2)
 
             {normKE->Fill(IsKaonE(m,pti));k=i;
             for (k;k<mh;k++)
             {
         mk=pow(p[k],2)*(pow(ttof[k]*(1e-7)*CC/pltof[k],2)-1);ptk=p[k]*sin(the0[k]);
 
-            if (charge[i]!=charge[k] && fabs(IsKaonE(mk,ptk))<3 && dcarm[k]==0 && etof[i]>0.002){
+            if (charge[i]!=charge[k] && fabs(IsKaonE(mk,ptk))<2 && dcarm[k]==0 && etof[i]>0.002&&pt<2){
 
             a=sqrt((p[i]*p[i]+Mk)*(p[k]*p[k]+Mk));b=cos(the0[i])*cos(the0[k]);
             m12=2*(Mk+a-(pti*ptk*cos(phi0[i]-phi0[k])+p[i]*p[k]*b));invE->Fill(sqrt(m12));invALL->Fill(sqrt(m12));}}}; 
@@ -243,14 +243,14 @@ for (Long64_t jentry=0; jentry<nentries;jentry++)
             {  
             pti=p[i]*sin(the0[i]);m=pow(p[i],2)*(pow(ttof[i]*(1e-7)*CC/pltof[i],2)-1);
 
-            if (dcarm[i]==1 && fabs(IsKaonW(m,pti))<3)
+            if (dcarm[i]==1 && fabs(IsKaonW(m,pti))<2&&pti<2)
 
             {normKW->Fill(IsKaonW(m,pti));k=i;
             for (k;k<mh;k++)
             {
         mk=pow(p[k],2)*(pow(ttof[k]*(1e-7)*CC/pltof[k],2)-1);ptk=p[k]*sin(the0[k]);
 
-            if (charge[i]!=charge[k] && fabs(IsKaonW(mk,ptk))<3 && dcarm[k]==1 && etof[i]>60 && etof[i]<600){
+            if (charge[i]!=charge[k] && fabs(IsKaonW(mk,ptk))<2 && dcarm[k]==1 && etof[i]>60 && etof[i]<600&&ptk<2){
 
             a=sqrt((p[i]*p[i]+Mk)*(p[k]*p[k]+Mk));b=cos(the0[i])*cos(the0[k]);
             m12=2*(Mk+a-(pti*ptk*cos(phi0[i]-phi0[k])+p[i]*p[k]*b));invW->Fill(sqrt(m12));invALL->Fill(sqrt(m12));}}
@@ -263,14 +263,14 @@ if(fabs(bbcz)<30 && cent>0 && cent<=80 )
             {  
             pti=p[i]*sin(the0[i]);m=pow(p[i],2)*(pow(ttof[i]*(1e-7)*CC/pltof[i],2)-1);
 
-            if (dcarm[i]==0&& fabs(IsKaonE(m,pti))<3)
+            if (dcarm[i]==0&& fabs(IsKaonE(m,pti))<2&&pti<2)
 
             {k=i;
             for (k;k<mh;k++)
             {
         mk=pow(p[k],2)*(pow(ttof[k]*(1e-7)*CC/pltof[k],2)-1);ptk=p[k]*sin(the0[k]);
 
-            if (dcarm[k]==1&&fabs(IsKaonW(mk,ptk))<3){
+            if (dcarm[k]==1&&fabs(IsKaonW(mk,ptk))<2&&ptk<2){
 
             a=sqrt((p[i]*p[i]+Mk)*(p[k]*p[k]+Mk));b=cos(the0[i])*cos(the0[k]);
             m12=2*(Mk+a-(pti*ptk*cos(phi0[i]-phi0[k])+p[i]*p[k]*b));invWE->Fill(sqrt(m12));invALL->Fill(sqrt(m12));}}
@@ -280,16 +280,17 @@ if(fabs(bbcz)<30 && cent>0 && cent<=80 )
     }
 cout << " Histograms for fitting was lopped"<<endl;
 TCanvas *MyW1 = new TCanvas ("CanSigma1","Test canvasqq1",1);MyW1->Divide(4,1);
-MyW1 -> cd(1);invE->GetXaxis()->SetTitle("inv mass,Gev");invE->Draw();gStyle->SetOptStat(1111111);
+MyW1 -> cd(1);invE->GetXaxis()->SetTitle("inv mass,Gev");invE->Draw();
 c=invE->GetMaximum();TLine *line1=new TLine();
 line1->DrawLine(1.02,0,1.02,c);cout <<gPad->GetUymax()<<endl;
-MyW1 -> cd(2);invW->GetXaxis()->SetTitle("inv mass,Gev");invW->Draw();gStyle->SetOptStat(1111111);
+MyW1 -> cd(2);invW->GetXaxis()->SetTitle("inv mass,Gev");invW->Draw();
 c=invW->GetMaximum();TLine *line2=new TLine();
 line2->DrawLine(1.02,0,1.02,c);cout <<MyW1->cd(2)->GetUymax()<<endl;
 MyW1 -> cd(3);invWE->GetXaxis()->SetTitle("inv mass,Gev");invWE->Draw();
-MyW1 -> cd(4);invALL->Draw();
+MyW1 -> cd(4);invALL->Draw();c=invALL->GetMaximum();TLine *line3=new TLine();
+line3->DrawLine(1.02,0,1.02,c);
 TCanvas *MyW2 = new TCanvas ("CanSigma2","Test canvasqq2",1);MyW2->Divide(2,1);
-MyW2 -> cd(1);normKE->Fit("gaus");normKE->Draw();MyW2 -> cd(2);normKW->Fit("gaus");normKW->Draw();
+MyW2 -> cd(1);normKE->Fit("gaus","R","",-1,1);normKE->Draw();MyW2 -> cd(2);normKW->Fit("gaus","R","",-1,1);normKW->Draw();
 }
 
 
