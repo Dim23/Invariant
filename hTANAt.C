@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include "pid.C" 
 
-int pn=14;TH1F *hmassW[14];TH1F *hmassE[14];TH1F *FitW[14];TH1F *FitE[14]; TH1F *inv;TH1F *normK;
+int pn=14;TH1F *hmassW[14];TH1F *hmassE[14];TH1F *FitW[14];TH1F *FitE[14]; TH1F *invW;TH1F *invE;TH1F *invWE;TH1F *invALL;TH1F *normKW;TH1F *normKE;
 //double A=0.5,B=3.5,d=(B-A)/(pn-1);
 static const double bin_w[15]={0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.6,1.8,2.0,2.3};
 
@@ -29,7 +29,7 @@ double *sig3E=new double[pn];
 
 int NN;
 float pt,eta,m,beta,dtime,charge_mom;
-const float CC=299792458,Mpi=0.019479835,Mk=0.24371698,Mpr=0.880354511,pi=3.141592654,mk=0.493667;
+const float CC=299792458,Mpi=0.019479835,Mk=0.24371698,Mpr=0.880354511,pi=3.141592654;
 char strE[20],strW[20];
 
 
@@ -84,8 +84,13 @@ dtimE=new TH1F("dtimeE","tof - t(exp for #pi),ns  TOF East Arm ",200,-2,10);
 
 hm2E  = new TH1F("hm2E","mass^{2} for Tof.East",150,-0.2,1.8);
 hm2W  = new TH1F("hm2W","mass^{2} for Tof.West",150,-0.2,1.8);
-inv  = new TH1F("inv","inv West",500,0,7);
-normK  = new TH1F("normK","NORM K West",100,-3,3);
+invW  = new TH1F("invW","inv West",1000,0,2);
+invE  = new TH1F("invE","inv East",1000,0,2);
+invWE  = new TH1F("invWE","inv West and East",500,0,7);
+invALL  = new TH1F("invALL","inv West and East ALL",4000,0,8);
+
+normKE  = new TH1F("normKE","NORM K East",50,-3,3);
+normKW  = new TH1F("normKW","NORM K West",50,-3,3);
 
 hpidW= new TH2F("hpidW","charge/momentum vs time of flight,  West Arm ",200,10,60,400,-2.2,2.2);
 hpidE= new TH2F("hpidE","charge/momentum vs time of flight,  East Arm ",200,10,60,400,-2.2,2.2);
@@ -198,7 +203,8 @@ cout << " Histograms for fitting was lopped"<<endl;
 
 void hTANA::INV()
 {
-float a,b,c,m12;
+float a,b,c,m12,mk,pti,ptk;
+int k;
 if (fChain == 0) return;
 
 Long64_t nentries = fChain->GetEntriesFast(),nbytes = 0, nb = 0;
@@ -215,22 +221,114 @@ for (Long64_t jentry=0; jentry<nentries;jentry++)
         {
         for (int i=0;i<mh;i++)
             {  
-            pt=p[i]*sin(the0[i]);m=pow(p[i],2)*(pow(ttof[i]*(1e-7)*CC/pltof[i],2)-1);if (dcarm[i]==0 && etof[i]>0.002&&pt>0.5&&pt<3.4){normK->Fill(IsKaonE(m,pt));}
+            pti=p[i]*sin(the0[i]);m=pow(p[i],2)*(pow(ttof[i]*(1e-7)*CC/pltof[i],2)-1);
 
-            if (dcarm[i]==0 && etof[i]>0.002&&fabs(IsKaonE(m,pt))<2&&pt>0.5&&pt<3.4)
+            if (dcarm[i]==0 && fabs(IsKaonE(m,pti))<3)
 
+            {normKE->Fill(IsKaonE(m,pti));k=i;
+            for (k;k<mh;k++)
             {
-            for (int k=i;k<mh;k++){if (charge[i]!=charge[k]&&fabs(IsKaonE(m,pt))<2){a=sqrt((p[i]*p[i]+Mk)*(p[k]*p[k]+Mk));b=cos(the0[i])*cos(the0[k]);c=sin(the0[i])*sin(the0[k])*cos(phi0[i]-phi0[k]); m12=2*(Mk+a-p[i]*p[k]*(b+c));inv->Fill(sqrt(m12));}}
-             }; 
+        mk=pow(p[k],2)*(pow(ttof[k]*(1e-7)*CC/pltof[k],2)-1);ptk=p[k]*sin(the0[k]);
 
-            
+            if (charge[i]!=charge[k] && fabs(IsKaonE(mk,ptk))<3 && dcarm[k]==0 && etof[i]>0.002){
+
+            a=sqrt((p[i]*p[i]+Mk)*(p[k]*p[k]+Mk));b=cos(the0[i])*cos(the0[k]);
+            m12=2*(Mk+a-(pti*ptk*cos(phi0[i]-phi0[k])+p[i]*p[k]*b));invE->Fill(sqrt(m12));invALL->Fill(sqrt(m12));}}}; 
+        }   }
+
+
+        if(fabs(bbcz)<30 && cent>0 && cent<=80 )
+        {
+        for (int i=0;i<mh;i++)
+            {  
+            pti=p[i]*sin(the0[i]);m=pow(p[i],2)*(pow(ttof[i]*(1e-7)*CC/pltof[i],2)-1);
+
+            if (dcarm[i]==1 && fabs(IsKaonW(m,pti))<3)
+
+            {normKW->Fill(IsKaonW(m,pti));k=i;
+            for (k;k<mh;k++)
+            {
+        mk=pow(p[k],2)*(pow(ttof[k]*(1e-7)*CC/pltof[k],2)-1);ptk=p[k]*sin(the0[k]);
+
+            if (charge[i]!=charge[k] && fabs(IsKaonW(mk,ptk))<3 && dcarm[k]==1 && etof[i]>60 && etof[i]<600){
+
+            a=sqrt((p[i]*p[i]+Mk)*(p[k]*p[k]+Mk));b=cos(the0[i])*cos(the0[k]);
+            m12=2*(Mk+a-(pti*ptk*cos(phi0[i]-phi0[k])+p[i]*p[k]*b));invW->Fill(sqrt(m12));invALL->Fill(sqrt(m12));}}
+             }; 
         }}
+
+if(fabs(bbcz)<30 && cent>0 && cent<=80 )
+        {
+        for (int i=0;i<mh;i++)
+            {  
+            pti=p[i]*sin(the0[i]);m=pow(p[i],2)*(pow(ttof[i]*(1e-7)*CC/pltof[i],2)-1);
+
+            if (dcarm[i]==0&& fabs(IsKaonE(m,pti))<3)
+
+            {k=i;
+            for (k;k<mh;k++)
+            {
+        mk=pow(p[k],2)*(pow(ttof[k]*(1e-7)*CC/pltof[k],2)-1);ptk=p[k]*sin(the0[k]);
+
+            if (dcarm[k]==1&&fabs(IsKaonW(mk,ptk))<3){
+
+            a=sqrt((p[i]*p[i]+Mk)*(p[k]*p[k]+Mk));b=cos(the0[i])*cos(the0[k]);
+            m12=2*(Mk+a-(pti*ptk*cos(phi0[i]-phi0[k])+p[i]*p[k]*b));invWE->Fill(sqrt(m12));invALL->Fill(sqrt(m12));}}
+             }; 
+        }}
+
     }
 cout << " Histograms for fitting was lopped"<<endl;
-TCanvas *MyW1 = new TCanvas ("CanSigma1","Test canvasqq1",1);
-inv->GetXaxis()->SetTitle("inv mass,Gev");inv->Draw();
-TCanvas *MyW2 = new TCanvas ("CanSigma2","Test canvasqq2",1);
-normK->Draw();
+TCanvas *MyW1 = new TCanvas ("CanSigma1","Test canvasqq1",1);MyW1->Divide(4,1);
+MyW1 -> cd(1);invE->GetXaxis()->SetTitle("inv mass,Gev");invE->Draw();gStyle->SetOptStat(1111111);
+c=invE->GetMaximum();TLine *line1=new TLine();
+line1->DrawLine(1.02,0,1.02,c);cout <<gPad->GetUymax()<<endl;
+MyW1 -> cd(2);invW->GetXaxis()->SetTitle("inv mass,Gev");invW->Draw();gStyle->SetOptStat(1111111);
+c=invW->GetMaximum();TLine *line2=new TLine();
+line2->DrawLine(1.02,0,1.02,c);cout <<MyW1->cd(2)->GetUymax()<<endl;
+MyW1 -> cd(3);invWE->GetXaxis()->SetTitle("inv mass,Gev");invWE->Draw();
+MyW1 -> cd(4);invALL->Draw();
+TCanvas *MyW2 = new TCanvas ("CanSigma2","Test canvasqq2",1);MyW2->Divide(2,1);
+MyW2 -> cd(1);normKE->Fit("gaus");normKE->Draw();MyW2 -> cd(2);normKW->Fit("gaus");normKW->Draw();
+}
+
+
+void hTANA::inv()
+{
+if (fChain == 0) return;
+float a,b,c,m12,mk,pti,ptk;
+int kp;
+Long64_t nentries = fChain->GetEntriesFast(),nbytes = 0, nb = 0;
+
+for (Long64_t jentry=0; jentry<nentries;jentry++) 
+   {    kp=0;
+        Long64_t ientry = LoadTree(jentry);
+        if (ientry < 0) break;
+        if(ientry%100000==0) cout << ientry<< " all entri is "<< kp <<endl;
+        nb = fChain->GetEntry(jentry);  nbytes += nb;
+
+        if(fabs(bbcz)<30 && cent>0 && cent<=80 )
+        {
+        for (int i=0;i<mh;i++)
+            {   
+                pti=p[i]*sin(the0[i]);m=pow(p[i],2)*(pow(ttof[i]*(1e-7)*CC/pltof[i],2)-1);
+                if(dcarm[i]==0&& fabs(IsKaonE(m,pti))<3)
+                {   kp+=1;
+                    for(int k=i;k<mh;k++)
+                    {
+                        ptk=p[k]*sin(the0[k]);m=pow(p[k],2)*(pow(ttof[k]*(1e-7)*CC/pltof[k],2)-1);
+                        if(charge[i]!=charge[k] &&dcarm[k]==0&& fabs(IsKaonE(m,ptk))<3)
+                        {
+                            a=sqrt((p[i]*p[i]+Mk)*(p[k]*p[k]+Mk));b=cos(the0[i])*cos(the0[k]);
+                            m12=2*(Mk+a-(pti*ptk*cos(phi0[i]-phi0[k])+p[i]*p[k]*b));invE->Fill(sqrt(m12));
+                        }
+                    }                
+                }
+            cout << ientry<< " all entri is "<< kp <<endl;
+            }
+        }
+    }
+invE->Draw();
 }
 
 //Функция для фита;
